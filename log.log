@@ -1,0 +1,56 @@
+solana -um stakes --output json-compact > all-stakes.json
+
+jq -r '[.[] | select( has("activeStake") and has("delegatedVoteAccountAddress") )] | group_by(.delegatedVoteAccountAddress) | map({key: .[0].delegatedVoteAccountAddress, totalActiveStake: (map(.activeStake) | add)}) | map("\(.key),\(.totalActiveStake)") | .[]' all-stakes.json | sort > all-stakes-jq.txt
+
+python3 group_stakes.py | sort > all-stakes-py.txt
+
+cat all-stakes-jq.txt | python3 check_sum.py
+379051517770755332
+
+cat all-stakes-py.txt | python3 check_sum.py
+379051517770755416
+
+diff all-stakes-jq.txt all-stakes-py.txt
+88c88
+< 3N7s9zXMZ4QqvHQR15t5GNHyqc89KduzMP7423eWiD5g,11100780350434336
+---
+> 3N7s9zXMZ4QqvHQR15t5GNHyqc89KduzMP7423eWiD5g,11100780350434335
+300c300
+< 6D2jqw9hyVCpppZexquxa74Fn33rJzzBx38T58VucHx9,10027494238208142
+---
+> 6D2jqw9hyVCpppZexquxa74Fn33rJzzBx38T58VucHx9,10027494238208135
+800c800
+< CvSb7wdQAFpHuSpTYTJnX5SYH4hCfQ9VuGnqrKaKwycB,9900483096223868
+---
+> CvSb7wdQAFpHuSpTYTJnX5SYH4hCfQ9VuGnqrKaKwycB,9900483096223869
+1343c1343
+< he1iusunGwqrNtafDtLdhsUQDFvo13z9sUa36PauBtk,13230731523356960
+---
+> he1iusunGwqrNtafDtLdhsUQDFvo13z9sUa36PauBtk,13230731523357051
+
+solana -um validators | grep he1ius
+  HEL1USMZKAL2odpNBj2oCjffnFGaYwmbGmyewGv1e2TU  he1iusunGwqrNtafDtLdhsUQDFvo13z9sUa36PauBtk     0%  325051493 (  0)  325051462 (  0)   0.03%  2987902   2.1.14  13230731.523357052 SOL (3.49%)
+
+
+solana -um stakes he1iusunGwqrNtafDtLdhsUQDFvo13z9sUa36PauBtk --output json-compact > helius.json
+
+jq -c '.[] | select( has("activeStake") ) | .activeStake ' helius.json > helius.txt
+
+cat helius.txt | python3 check_sum.py 
+13230731523357051
+
+cat helius.txt | python3 check_last_digit.py 
+79161
+
+solana -um validators | grep CvSb7wdQAFpHuSpTYTJnX5SYH4hCfQ9VuGnqrKaKwycB
+  DtdSSG8ZJRZVv5Jx7K1MeWp7Zxcu19GD5wQRGRpQ9uMF  CvSb7wdQAFpHuSpTYTJnX5SYH4hCfQ9VuGnqrKaKwycB    5%  325054434 (  0)  325054403 (  0)   0.04%  3034765   2.1.11   9900483.096223868 SOL (2.61%)
+
+solana -um stakes CvSb7wdQAFpHuSpTYTJnX5SYH4hCfQ9VuGnqrKaKwycB --output json-compact > cvsb.json
+jq -c '.[] | select( has("activeStake") ) | .activeStake ' cvsb.json > cvsb.txt
+
+cat cvsb.txt | python3 check_sum.py 
+9900483096223869
+
+cat cvsb.txt | python3 check_last_digit.py 
+2739
+
